@@ -1,10 +1,10 @@
 # BrokenTracks
-
 BrokenTracks is a mod for Zeepkist to help better handle dealing with broken/updated tracks in playslists. To allow easier identification of these tracks, and some automation to keep the playlist going.
 
+## Dependencies
+ZeepSDK [Mod.io](https://mod.io/g/zeepkist/m/zeepsdk) - [Github](https://github.com/donderjoekel/ZeepSDK/)
 
 ## Features
-
 - Build list of bad tracks when a track fails to load resulting in loading AO5.
 - Color tracks on playlist to easily identify bad tracks <br />
   ![](https://i.imgur.com/kjbUkfu.png)
