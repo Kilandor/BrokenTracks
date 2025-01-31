@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
+using ZeepkistClient;
 using ZeepkistNetworking;
 using ZeepSDK.Storage;
 
@@ -17,6 +17,7 @@ public class Plugin : BaseUnityPlugin
     
     public ConfigEntry<bool> modEnabled;
     public ConfigEntry<bool> autoSkipEnabled;
+    public ConfigEntry<bool> autoNextEnabled;
     public ConfigEntry<float> warningDuration;
     
     public static ConfigEntry<bool> clearBrokenTracks;
@@ -26,16 +27,19 @@ public class Plugin : BaseUnityPlugin
     {
         harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
-
-        // Plugin startup logic
-        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
+        
+        //Not Needed right now
+        //ZeepSDK.Chat.ChatApi.ChatMessageReceived += BTCore.OnChatMessageReceived;
+        //ZeepkistNetwork.ChatMessageReceived += BTCore.OnChatMessageReceived2;
         
         Instance = this;
         ConfigSetup();
 
         storage = StorageApi.CreateModStorage(this);
         BTCore.loadData(); // load all saved data
-
+        
+        // Plugin startup logic
+        Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
     }
 
     private void OnDestroy()
@@ -47,12 +51,13 @@ public class Plugin : BaseUnityPlugin
     private void ConfigSetup()
     {
         modEnabled = Config.Bind("1. General", "Plugin Enabled", true, "Is the plugin currently enabled?");
-        autoSkipEnabled = Config.Bind("1. General", "Auto-Skip after broken", true, "Auto-Skips to the next intened track if A05 is loaded due to a broken track");
-        warningDuration = Config.Bind("1. General", "Broken Track warning duration", 5f, "How long the warning message shows up for");
+        autoSkipEnabled = Config.Bind("1. General", "Auto-Skip after broken", true, "Auto-Skips to the next intened track if A05 is loaded due to a broken track.");
+        autoNextEnabled = Config.Bind("1. General", "Auto-Set next map if broken detected", true, "Auto-sets to the next working map in the playlist if the next map is broken.");
+        warningDuration = Config.Bind("1. General", "Broken Track warning duration", 5f, "How long the warning message shows up for.");
         
-        clearBrokenTracks = Config.Bind("9. Dev / Debug", "Delete saved broken tracks", false, "[Button] Deletes all broken track information");
+        clearBrokenTracks = Config.Bind("9. Dev / Debug", "Delete saved broken tracks", false, "[Button] Deletes all broken track information.");
         clearBrokenTracks.SettingChanged += BTCore.ClearBrokenTracks;
-        debugEnabled = Config.Bind("9. Dev / Debug", "Debug Logs", false, "Provides extra output in logs for troubleshooting");
+        debugEnabled = Config.Bind("9. Dev / Debug", "Debug Logs", false, "Provides extra output in logs for troubleshooting.");
         
     }
     
@@ -115,6 +120,31 @@ public class Plugin : BaseUnityPlugin
             if (Plugin.Instance.modEnabled.Value)
             {
                 BTCore.OnDoStart();
+            }
+        }
+    }
+    
+        
+    [HarmonyPatch(typeof(ZeepkistNetwork), "OnChangeLobbyPlaylistIndex")]
+    public class SetupChangeLobbyPlaylistIndex
+    {
+        public static void Prefix(ChangeLobbyPlaylistIndexPacket packet)
+        {
+            if (Plugin.Instance.modEnabled.Value)
+            {
+                BTCore.OnChangeLobbyPlaylistIndex(packet);
+            }
+        }
+    }
+    
+    [HarmonyPatch(typeof(OnlineChatUI), "SendChatMessage")]
+    public class SetupSendChatMessage
+    {
+        public static void Prefix(string message)
+        {
+            if (Plugin.Instance.modEnabled.Value)
+            {
+                BTCore.OnSendChatMessage(message);
             }
         }
     }
