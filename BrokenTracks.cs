@@ -164,7 +164,7 @@ namespace BrokenTracks
            if (newZeeplevel == null)
                 return; 
           
-           Plugin.Instance.Log(JsonConvert.SerializeObject(newZeeplevel, Formatting.Indented), 2);
+           //Plugin.Instance.Log(JsonConvert.SerializeObject(newZeeplevel, Formatting.Indented), 2);
            //Level isn't found in the list color it orange, could be from not downloaded or missing
            if(!LevelManager.Instance.TryGetLevel(newZeeplevel.UID, out LevelScriptableObject _))
            {
@@ -214,7 +214,7 @@ namespace BrokenTracks
                 return;
             }
             Plugin.Instance.Log("Master "+ZeepkistNetwork.IsMasterClient+" - HostPower "+ZeepkistNetwork.LocalPlayer.hasHostPowers, 2);
-            Plugin.Instance.Log("Starting Level "+JsonConvert.SerializeObject(lobby, Formatting.Indented), 2);
+            //Plugin.Instance.Log("Starting Level "+JsonConvert.SerializeObject(lobby, Formatting.Indented), 2);
             
             if(lobby.LevelUID == "ea1" && lobby.Playlist.Count == 1)
                 Plugin.Instance.Log("This is a new Lobby with the default playlist.", 2);
@@ -301,8 +301,10 @@ namespace BrokenTracks
          */
         public static void OnChangeLobbyPlaylistIndex(ChangeLobbyPlaylistIndexPacket packet)
         {
+            if (!ZeepkistNetwork.IsMasterClient)
+                return;
+            
             ZeepkistLobby lobby = ZeepkistNetwork.CurrentLobby;
-
             Plugin.Instance.Log("ChangedLobbyPlaylistIndexPacket  lobby " + lobby.CurrentPlaylistIndex + " CurrentIndex: " + packet.CurrentIndex + " Next: " + packet.NextIndex, 2);
 
             if (lobby.CurrentPlaylistIndex != packet.CurrentIndex)
@@ -315,6 +317,9 @@ namespace BrokenTracks
 
         public static void OnChatMessageReceived(ulong playerid, string username, string message)
         {
+            if (!ZeepkistNetwork.IsMasterClient)
+                return;
+            
             /*
              * Default message sent when a invalid map is loaded
              * <i><color=red>Workshop Level could not be loaded! <sprite="Zeepkist" name="Skull"> Skipping...</color></i>
@@ -333,6 +338,9 @@ namespace BrokenTracks
 
         public static void OnSendChatMessage( string message)
         {
+            if (!ZeepkistNetwork.IsMasterClient)
+                return;
+            
             //get the local player who is sending the command so we can send a private message to them
             //ChatAPI.AddLocalMessage is removed when round ends, so it doesn't fit the needs 
             ZeepkistNetworkPlayer player = ZeepkistNetwork.LocalPlayer;
