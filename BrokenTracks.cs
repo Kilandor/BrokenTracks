@@ -19,6 +19,7 @@ namespace BrokenTracks
         public static Color32 darkRed = new Color32(137, 0, 0, 255);
         public static Color32 zeepkistOrange = new Color32(255, 146, 0, 255);
         public static string nextLevelUID;
+        public static int nextLevelIndex;
         public static bool skippedRandomly = false;
         public static Dictionary<string, OnlineZeeplevel> badTracks = new ();
 
@@ -187,6 +188,7 @@ namespace BrokenTracks
             OnlineZeeplevel nextZeeplevel = instance.thePlaylist[instance.nextPlayListIndex];
             Plugin.Instance.Log(" Accepted Playlist to "+nextZeeplevel.UID, 2);
             nextLevelUID = nextZeeplevel.UID;
+            nextLevelIndex = instance.nextPlayListIndex;
             
             if (badTracks.ContainsKey(nextLevelUID))
             {
@@ -210,6 +212,7 @@ namespace BrokenTracks
             {
                 //prepare for the next track
                 nextLevelUID = lobby.Playlist[lobby.NextPlaylistIndex].UID;
+                nextLevelIndex = lobby.NextPlaylistIndex;
                 skippedRandomly = false;
                 return;
             }
@@ -222,6 +225,7 @@ namespace BrokenTracks
             Plugin.Instance.Log("LobbyNextIndex "+lobby.NextPlaylistIndex+" UID ", 2);
             Plugin.Instance.Log("pUID "+lobby.Playlist[lobby.NextPlaylistIndex].UID, 2);
             Plugin.Instance.Log("nUID "+nextLevelUID, 2);
+            Plugin.Instance.Log("nIndex "+nextLevelIndex, 2);
             
             // When the server loads to EA5 through an invalid level, the next playlist item doesn't change its kept the same
             if(lobby.LevelUID == "ea5" && lobby.Playlist.Count >= 1 && lobby.Playlist[lobby.NextPlaylistIndex].UID == nextLevelUID)
@@ -234,7 +238,9 @@ namespace BrokenTracks
                     {
                         if (!badTracks.ContainsKey(nextLevelUID))
                         {
-                            badTracks.Add(nextLevelUID, lobby.Playlist[lobby.NextPlaylistIndex]);
+                            //use the global stored index that matches UID
+                            //This is due to it updating possibly when waiting for steam status
+                            badTracks.Add(nextLevelUID, lobby.Playlist[nextLevelIndex]);
                             Plugin.Instance.Log("Added " + nextLevelUID + "to bad tracks.");
                             saveData("brokentracks");
                         }
@@ -245,6 +251,7 @@ namespace BrokenTracks
 
                         int nextIndex = findNextGoodTrack(lobby.Playlist, lobby.NextPlaylistIndex);
                         nextLevelUID = lobby.Playlist[nextIndex].UID;
+                        nextLevelIndex = nextIndex;
 
                         Plugin.Instance.Log("Setting next track "+nextLevelUID, 2);
                         if(Plugin.Instance.autoSkipEnabled.Value)
@@ -280,6 +287,7 @@ namespace BrokenTracks
                 }
                 
                nextLevelUID = lobby.Playlist[lobby.NextPlaylistIndex].UID;
+               nextLevelIndex = lobby.NextPlaylistIndex;
                Plugin.Instance.Log("Correct Level loaded setting next track "+nextLevelUID, 2);
                if (badTracks.ContainsKey(nextLevelUID))
                {
@@ -289,6 +297,7 @@ namespace BrokenTracks
                    {
                        int nextIndex = findNextGoodTrack(lobby.Playlist, lobby.NextPlaylistIndex);
                        nextLevelUID = lobby.Playlist[nextIndex].UID;
+                       nextLevelIndex = nextIndex;
                        ZeepSDK.Multiplayer.MultiplayerApi.SetNextLevelIndex(nextIndex);
                    }
                }
@@ -310,7 +319,11 @@ namespace BrokenTracks
             if (lobby.CurrentPlaylistIndex != packet.CurrentIndex)
             {
                 if (packet.CurrentIndex >= 0 && packet.CurrentIndex < lobby.Playlist.Count)
+                {
                     nextLevelUID = lobby.Playlist[packet.CurrentIndex].UID;
+                    nextLevelIndex = packet.CurrentIndex;
+                }
+
                 Plugin.Instance.Log("PlaylistIndexPacket changed next level to " + nextLevelUID, 2);
             }
         }
@@ -378,7 +391,11 @@ namespace BrokenTracks
                     ZeepkistLobby lobby = ZeepkistNetwork.CurrentLobby;
                     int nextIndex = int.Parse(argument);
                     if (nextIndex >= 0 && nextIndex < lobby.Playlist.Count)
+                    {
                         nextLevelUID = lobby.Playlist[nextIndex].UID;
+                        nextLevelIndex = nextIndex;
+                    }
+
                     Plugin.Instance.Log("Command detected setting nextLevelUID "+nextLevelUID, 2);
                 }
             }
