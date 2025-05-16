@@ -76,8 +76,17 @@ namespace BrokenTracks
                 Plugin.Instance.Log("Loading all from json.", 2);
             if (type is "brokentracks" or "all")
             {
-                badTracks = (Dictionary<string, OnlineZeeplevel>)Plugin.storage.LoadFromJson("brokentracks", badTracks.GetType());
-                Plugin.Instance.Log("Loading brokentracks from json.", 2);
+                if (Plugin.storage.JsonFileExists("brokentracks"))
+                {
+                    badTracks = (Dictionary<string, OnlineZeeplevel>)Plugin.storage.LoadFromJson("brokentracks",
+                        badTracks.GetType());
+                    Plugin.Instance.Log("Loading brokentracks from json.", 2);
+                }
+                else
+                {
+                    badTracks = new();
+                    Plugin.Instance.Log("JSON brokentracks file not found.", 2);
+                }
             }
         }
         public static void ClearBrokenTracks(object sender, EventArgs e)
@@ -203,7 +212,7 @@ namespace BrokenTracks
             
             if (!ZeepkistNetwork.IsConnectedToGame || !ZeepkistNetwork.IsMasterClient) //&& !ZeepkistNetwork.LocalPlayer.hasHostPowers))
             {
-                Plugin.Instance.Log("Not connected, or not master/host, skipping logic. Master "+ZeepkistNetwork.IsMasterClient+" - HostPower "+ZeepkistNetwork.LocalPlayer.hasHostPowers, 2);
+                Plugin.Instance.Log("Not connected, or not master/host, skipping logic.", 2);
                 return;
             }
             
